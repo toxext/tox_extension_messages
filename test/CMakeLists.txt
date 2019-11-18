@@ -8,7 +8,8 @@ include(CTest)
 function(tox_extension_messages_test test_name)
 	add_executable(${test_name} ${ARGN})
 	# we use gnu11 for the tests so we can use the container_of macro for inheritance a la linux
-	target_compile_options(${test_name} PRIVATE -Wall -Wextra -Werror -std=gnu11 -ftest-coverage -fprofile-arcs)
+	# Force _DEBUG for tests since we use the assert macro for verification
+	target_compile_options(${test_name} PRIVATE -Wall -Wextra -Werror -std=gnu11 -ftest-coverage -fprofile-arcs -D_DEBUG -UNDEBUG)
 	#target_link_options(${test_name} PRIVATE -fprofile-arcs -ftest-coverage)
 	target_link_libraries(${test_name} gcov ToxExt::Mock)
 	target_include_directories(${test_name} PRIVATE "${TOXCORE_INCLUDEDIR}")
