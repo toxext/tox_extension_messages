@@ -163,10 +163,9 @@ bool parse_messages_packet(uint8_t const *data, size_t size,
 // an enable flag from the other side to indicate that they are now embedding message ids.
 static void tox_extension_messages_recv(
 	struct ToxExtExtension *extension, uint32_t friend_id, void const *data,
-	size_t size, void *userdata, struct ToxExtPacketList *response_packet)
+	size_t size, void *userdata, struct ToxExtPacketList *response_packet_list)
 {
 	(void)extension;
-	(void)response_packet;
 	struct ToxExtensionMessages *ext_message_ids = userdata;
 	struct IncomingMessage *incoming_message =
 		get_incoming_message(ext_message_ids, friend_id);
@@ -216,7 +215,7 @@ static void tox_extension_messages_recv(
 		uint8_t data[9];
 		data[0] = MESSAGE_RECEIVED;
 		toxext_write_to_buf(parsed_packet.receipt_id, data + 1, 8);
-		toxext_packet_append(response_packet,
+		toxext_segment_append(response_packet_list,
 				     ext_message_ids->extension_handle, data,
 				     9);
 
@@ -245,7 +244,7 @@ static void tox_extension_messages_recv(
 		uint8_t data[9];
 		data[0] = MESSAGE_RECEIVED;
 		toxext_write_to_buf(parsed_packet.receipt_id, data + 1, 8);
-		toxext_packet_append(response_packet,
+		toxext_segment_append(response_packet_list,
 				     ext_message_ids->extension_handle, data,
 				     9);
 
@@ -256,10 +255,10 @@ static void tox_extension_messages_recv(
 static void tox_extension_messages_neg(struct ToxExtExtension *extension,
 				       uint32_t friend_id, bool compatible,
 				       void *userdata,
-				       struct ToxExtPacketList *response_packet)
+				       struct ToxExtPacketList *response_packet_list)
 {
 	(void)extension;
-	(void)response_packet;
+	(void)response_packet_list;
 	struct ToxExtensionMessages *ext_message_ids = userdata;
 	get_or_insert_incoming_message(ext_message_ids, friend_id);
 	ext_message_ids->negotiated_cb(friend_id, compatible,
@@ -316,7 +315,7 @@ tox_extension_messages_chunk(bool first_chunk, uint8_t const *data, size_t size,
 			     size_t *output_size)
 {
 	uint8_t const *ret;
-	bool bLastChunk = size <= TOXEXT_MAX_PACKET_SIZE - 9;
+	bool bLastChunk = size <= TOXEXT_MAX_SEGMENT_SIZE - 9;
 
 	if (bLastChunk) {
 		extension_data[0] = MESSAGE_FINISH;
@@ -329,15 +328,15 @@ tox_extension_messages_chunk(bool first_chunk, uint8_t const *data, size_t size,
 	} else if (first_chunk) {
 		extension_data[0] = MESSAGE_START;
 		toxext_write_to_buf(size, extension_data + 1, 8);
-		size_t advance_size = TOXEXT_MAX_PACKET_SIZE - 9;
+		size_t advance_size = TOXEXT_MAX_SEGMENT_SIZE - 9;
 		memcpy(extension_data + 9, data, advance_size);
-		*output_size = TOXEXT_MAX_PACKET_SIZE;
+		*output_size = TOXEXT_MAX_SEGMENT_SIZE;
 		ret = data + advance_size;
 	} else {
 		extension_data[0] = MESSAGE_PART;
-		size_t advance_size = TOXEXT_MAX_PACKET_SIZE - 1;
+		size_t advance_size = TOXEXT_MAX_SEGMENT_SIZE - 1;
 		memcpy(extension_data + 1, data, advance_size);
-		*output_size = TOXEXT_MAX_PACKET_SIZE;
+		*output_size = TOXEXT_MAX_SEGMENT_SIZE;
 		ret = data + advance_size;
 	}
 
@@ -345,7 +344,7 @@ tox_extension_messages_chunk(bool first_chunk, uint8_t const *data, size_t size,
 }
 
 uint64_t tox_extension_messages_append(struct ToxExtensionMessages *extension,
-				       struct ToxExtPacketList *packet,
+				       struct ToxExtPacketList *packet_list,
 				       uint8_t const *data, size_t size)
 {
 	uint8_t const *end = data + size;
@@ -353,14 +352,14 @@ uint64_t tox_extension_messages_append(struct ToxExtensionMessages *extension,
 	bool first_chunk = true;
 	uint64_t receipt_id = extension->next_receipt_id++;
 	do {
-		uint8_t extension_data[TOXEXT_MAX_PACKET_SIZE];
+		uint8_t extension_data[TOXEXT_MAX_SEGMENT_SIZE];
 		size_t size_for_chunk;
 		next_chunk = tox_extension_messages_chunk(
 			first_chunk, next_chunk, end - next_chunk, receipt_id,
 			extension_data, &size_for_chunk);
 		first_chunk = false;
 
-		toxext_packet_append(packet, extension->extension_handle,
+		toxext_segment_append(packet_list, extension->extension_handle,
 				     extension_data, size_for_chunk);
 	} while (end > next_chunk);
 	return receipt_id;
