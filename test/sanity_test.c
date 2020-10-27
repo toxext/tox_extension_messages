@@ -39,10 +39,10 @@ static void test_neg_cb(uint32_t friend_number, bool compatible,
 
 static char const zero_sized_buffer[] = "";
 static char const small_sized_buffer[] = "asdf";
-static uint8_t med_sized_buffer[TOXEXT_MAX_PACKET_SIZE * 2 -
-				TOXEXT_MAX_PACKET_SIZE / 2];
-static uint8_t large_sized_buffer[TOXEXT_MAX_PACKET_SIZE * 3 -
-				  TOXEXT_MAX_PACKET_SIZE / 2];
+static uint8_t med_sized_buffer[TOXEXT_MAX_SEGMENT_SIZE * 2 -
+				TOXEXT_MAX_SEGMENT_SIZE / 2];
+static uint8_t large_sized_buffer[TOXEXT_MAX_SEGMENT_SIZE * 3 -
+				  TOXEXT_MAX_SEGMENT_SIZE / 2];
 
 static void test_send_buffer(struct ToxExtUser *user_a,
 			     struct ToxExtensionMessages *ext_a,
