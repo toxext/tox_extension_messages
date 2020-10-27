@@ -30,10 +30,12 @@ static void test_receipt_cb(uint32_t friend_number, const uint64_t receipt_id,
 }
 
 static void test_neg_cb(uint32_t friend_number, bool compatible,
+			uint64_t max_sending_size,
 			void *user_data)
 {
 	(void)friend_number;
 	(void)compatible;
+	(void)max_sending_size;
 	(void)user_data;
 }
 
@@ -51,8 +53,11 @@ static void test_send_buffer(struct ToxExtUser *user_a,
 {
 	struct ToxExtPacketList *packet_list =
 		toxext_packet_list_create(user_a->toxext, user_b->tox_user.id);
+	enum Tox_Extension_Messages_Error err;
 	uint64_t id = tox_extension_messages_append(ext_a, packet_list, buffer,
-						    buffer_size);
+						    buffer_size,
+						    user_b->tox_user.id, &err);
+	assert(err == TOX_EXTENSION_MESSAGES_SUCCESS);
 
 	// if receipt_called is false any id is valid
 	assert(id != last_received_receipt_id || !receipt_called);
@@ -82,12 +87,16 @@ int main(void)
 	toxext_test_init_tox_ext_user(&user_b);
 
 	struct ToxExtensionMessages *ext_a = tox_extension_messages_register(
-		user_a.toxext, test_cb, test_receipt_cb, test_neg_cb, NULL);
+		user_a.toxext, test_cb, test_receipt_cb, test_neg_cb, NULL,
+		TOX_EXTENSION_MESSAGES_DEFAULT_MAX_RECEIVING_MESSAGE_SIZE);
 	struct ToxExtensionMessages *ext_b = tox_extension_messages_register(
-		user_b.toxext, test_cb, test_receipt_cb, test_neg_cb, NULL);
+		user_b.toxext, test_cb, test_receipt_cb, test_neg_cb, NULL,
+		TOX_EXTENSION_MESSAGES_DEFAULT_MAX_RECEIVING_MESSAGE_SIZE);
 
 	tox_extension_messages_negotiate(ext_a, user_b.tox_user.id);
 
+	tox_iterate(user_b.tox_user.tox, &user_b.tox_user);
+	tox_iterate(user_a.tox_user.tox, &user_a.tox_user);
 	tox_iterate(user_b.tox_user.tox, &user_b.tox_user);
 	tox_iterate(user_a.tox_user.tox, &user_a.tox_user);
 
