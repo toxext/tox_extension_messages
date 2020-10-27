@@ -23,3 +23,4 @@ endif()
 endfunction(tox_extension_messages_test)
 
 tox_extension_messages_test(sanity_test sanity_test.c)
+tox_extension_messages_test(max_message_test max_message_test.c)
