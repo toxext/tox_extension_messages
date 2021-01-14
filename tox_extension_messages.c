@@ -157,10 +157,6 @@ bool parse_messages_packet(uint8_t const *data, size_t size,
 	return true;
 }
 
-// Here they confirm that they are indeed sending us messages. We don't call the
-// negotation callback when we've both negotiated that we have the extension
-// because at that point they don't know we can accept the message ids. We wait for
-// an enable flag from the other side to indicate that they are now embedding message ids.
 static void tox_extension_messages_recv(
 	struct ToxExtExtension *extension, uint32_t friend_id, void const *data,
 	size_t size, void *userdata, struct ToxExtPacketList *response_packet_list)
