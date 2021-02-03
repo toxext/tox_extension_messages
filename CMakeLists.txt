@@ -1,4 +1,6 @@
 project(tox_extension_messages)
+cmake_minimum_required(VERSION 2.8.12)
+
 
 if(COMMAND cmake_policy)
   cmake_policy(SET CMP0003 NEW)
