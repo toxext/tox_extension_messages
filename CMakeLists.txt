@@ -16,5 +16,10 @@ set_target_properties(ToxExtensionMessages PROPERTIES OUTPUT_NAME "tox_extension
 install(TARGETS ToxExtensionMessages EXPORT ToxExtensionMessagesConfig ARCHIVE DESTINATION lib PUBLIC_HEADER DESTINATION include)
 install(EXPORT ToxExtensionMessagesConfig DESTINATION lib/cmake/ToxExtensionMessages NAMESPACE ToxExtensionMessages::)
 
-include (CTest)
-add_subdirectory(test)
+if (TARGET ToxExt::Mock)
+  include (CTest)
+  add_subdirectory(test)
+else()
+  message("ToxExt::Mock not installed. Disabling tests")
+endif()
+
